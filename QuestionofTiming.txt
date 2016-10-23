@@ -1,0 +1,144 @@
+int reading = 0;
+double volts = 0.0;
+int analogPin = A0;
+int internalLED = D7;
+int unitsLED = D6;
+int tensLED = D5;
+int hundredsLED = D3;
+int buzzer = D2;
+int switcher = D0;
+int count = 0;
+int delayTime = 200;
+int frequency = 550;
+boolean switchStatus = false;//maintains the status of the switch
+boolean activityStatus = false;//maintains the activity start or stop
+int timeOne;//Initial time
+int timeTwo;//final time
+int totalTime=0;
+int prevTime;//to store for resuming the activity timer
+String actTrack = "";//this is the string which would be published
+
+void setup() {
+    pinMode(internalLED,OUTPUT);
+    pinMode(unitsLED,OUTPUT);
+    pinMode(tensLED,OUTPUT);
+    pinMode(hundredsLED,OUTPUT);
+    pinMode(switcher,INPUT_PULLUP);
+    Serial.begin(9600);
+}
+void loop() {
+    reading = analogRead(analogPin);
+    volts = reading * 3.3 / 4096.0;
+    prevTime = totalTime;
+    if(volts < 0.5){
+        
+        tone(buzzer,frequency,delayTime);
+        if(activityStatus){//if activity is stopped
+            digitalWrite(internalLED,LOW);
+            totalTime = 0;
+            activityStatus = false;
+            timeTwo = Time.now();
+            totalTime = (timeTwo - timeOne) + prevTime;
+            actTrack = "Activity " + String(count) + "Total elapsed time: "+String(totalTime);
+            Particle.publish("actTrack",actTrack);
+            Serial.println("Total elapsed time:"+String(totalTime));
+            delay(2000);
+        }else{//Activity started
+            digitalWrite(internalLED,HIGH);
+            activityStatus = true;
+            timeOne = Time.now();
+        }
+    }
+    Serial.println("activityStatus:"+String(activityStatus));
+    if(digitalRead(switcher)==0){//Switch Pressed
+        Serial.println("Switch pressed");
+        totalTime = 0;
+        prevTime=0;
+        activityStatus = false;
+        if(switchStatus){
+            if(count>7){
+                count=0;
+            }else{
+                count++;
+            }
+            switchStatus=false;    
+        }else{
+            switchStatus=true;
+        }
+    }
+   
+    switch(count){//calls the responding activity
+        case 1:
+            one();
+            break;
+        case 2: 
+            two();
+            break;
+        case 3:
+            three();
+            break;
+        case 4:
+            four();
+            break;
+        case 5:
+            five();
+            break;
+        case 6:
+            six();
+            break;
+        case 7:
+            seven();
+            break;
+        default:
+            zero();
+            break;
+    }
+}
+
+void zero(){//For Task0
+    digitalWrite(unitsLED,LOW);
+    digitalWrite(tensLED,LOW);
+    digitalWrite(hundredsLED,LOW);
+}
+
+void one(){//For Task1
+    digitalWrite(unitsLED,HIGH);
+    digitalWrite(tensLED,LOW);
+    digitalWrite(hundredsLED,LOW);
+}
+
+void two(){//For Task2
+    digitalWrite(unitsLED,LOW);
+    digitalWrite(tensLED,HIGH);
+    digitalWrite(hundredsLED,LOW);
+}
+
+void three(){//For Task3
+    digitalWrite(unitsLED,HIGH);
+    digitalWrite(tensLED,HIGH);
+    digitalWrite(hundredsLED,LOW);
+}
+
+void four(){//For Task4
+    digitalWrite(unitsLED,LOW); 
+    digitalWrite(tensLED,LOW);
+    digitalWrite(hundredsLED,HIGH);
+}
+
+void five(){//For Task5
+    digitalWrite(unitsLED,HIGH);
+    digitalWrite(tensLED,LOW);
+    digitalWrite(hundredsLED,HIGH);
+}
+
+void six(){//For Task6
+    digitalWrite(unitsLED,LOW);
+    digitalWrite(tensLED,HIGH);
+    digitalWrite(hundredsLED,HIGH);
+}
+
+void seven(){////For Task7
+    digitalWrite(unitsLED,HIGH);
+    digitalWrite(tensLED,HIGH);
+    digitalWrite(hundredsLED,HIGH);
+}

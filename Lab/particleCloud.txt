@@ -1,0 +1,194 @@
+//Sai and Ronak
+//https://goo.gl/photos/oo9cYUet1ZLtmaYY7
+int switch1 = D2;
+int switch2 = D0;
+int led0 = D7;
+int led1 = D5;
+int led2 = D3;
+int count = 0;
+int delayTime = 100;
+int secretNumber;
+int prevCount = 0;
+String message = "";
+String result = "";
+int speakerPin = A4;
+double previousTime;
+// create an array for the notes in the melody:
+//C4,G3,G3,A3,G3,0,B3,C4
+int melody[] = {1908,2551,2551,2273,2551,0,2024,1908}; 
+
+// create an array for the duration of notes.
+// note durations: 4 = quarter note, 8 = eighth note, etc.:
+int noteDurations[] = {4,8,8,4,4,4,4,4 };
+void setup() {
+    pinMode(switch1,INPUT_PULLUP);
+    pinMode(switch2,INPUT_PULLUP);
+    pinMode(led0,OUTPUT);
+    pinMode(led1,OUTPUT);
+    pinMode(led2,OUTPUT);
+    pinMode(speakerPin,OUTPUT);
+    Serial.begin(9600);
+    secretNumber = random(0,8);
+    Serial.println("Secret Number:"+String(secretNumber));
+}
+
+void loop() {
+    //Serial.println("secret number:"+String(secretNumber));
+    //Serial.println("BEfore the loop");
+    //tone(speakerPin,550,2000);
+    if(digitalRead(switch2)==HIGH){
+        if(digitalRead(switch1)==LOW){
+            //Serial.println(digitalRead(switch1));
+            if(count==7){
+                count = -1;
+            }
+            count ++;
+            Serial.println("count:"+String(count));
+            delay(delayTime);
+        }
+    }
+    prevCount = count;
+    Serial.println("Guess:"+String(prevCount));
+    glowLED();
+    delay(delayTime);
+    if(digitalRead(switch2)==LOW && Time.now()-previousTime > 0.2){
+        Serial.println("Count stopped:");
+        if(secretNumber == prevCount){
+            result = "correct";
+            playNotes();
+            Particle.publish("result",result);
+            Serial.println("correct");
+        }else if(secretNumber < prevCount){
+            result = "HIGH";
+            tone(speakerPin,750,100);
+            Particle.publish("result",result);
+            Serial.println("high");
+        }else{
+            result = "LOW";
+            tone(speakerPin,250,100);
+            Particle.publish("result",result);
+            Serial.println("low");
+        }
+        
+    }
+}
+
+int glowLED(){
+    switch(prevCount){
+        case 0: zero();
+            break;
+        case 1: one();
+            break;
+        case 2: two();
+            break;
+        case 3: three();
+            break;
+        case 4: four();
+            break;
+        case 5: five();
+            break;
+        case 6: six();
+            break;
+        case 7: seven();
+            break;
+        default: zero();
+            break;
+    }
+}
+
+int zero(){
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+    delay(delayTime);
+}
+
+int one(){
+    digitalWrite(led0,HIGH);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+    delay(delayTime);
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+}
+
+int two(){
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,HIGH);
+    digitalWrite(led2,LOW);
+    delay(delayTime);
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+}
+
+int three(){
+    digitalWrite(led0,HIGH);
+    digitalWrite(led1,HIGH);
+    digitalWrite(led2,LOW);
+    delay(delayTime);
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+}
+
+int four(){
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,HIGH);
+    delay(delayTime);
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+}
+
+int five(){
+    digitalWrite(led0,HIGH);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,HIGH);
+    delay(delayTime);
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+}
+
+int six(){
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,HIGH);
+    digitalWrite(led2,HIGH);
+    delay(delayTime);
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+}
+
+int seven(){
+    digitalWrite(led0,HIGH);
+    digitalWrite(led1,HIGH);
+    digitalWrite(led2,HIGH);
+    delay(delayTime);
+    digitalWrite(led0,LOW);
+    digitalWrite(led1,LOW);
+    digitalWrite(led2,LOW);
+}
+
+void playNotes()
+{
+    // iterate over the notes of the melody:
+    for (int thisNote = 0; thisNote < 8; thisNote++) {
+
+      // to calculate the note duration, take one second
+      // divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration = 1000/noteDurations[thisNote];
+      tone(speakerPin, melody[thisNote],noteDuration);
+
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.30;
+      delay(pauseBetweenNotes);
+      // stop the tone playing:
+      noTone(speakerPin);
+    }
+}
